@@ -75,7 +75,7 @@ def extract_floor_faces(mesh, normal_y_threshold=0.5, height_tolerance=0.5):
     return floor_indices
 
 
-def cluster_floor_faces(mesh, floor_indices):
+def cluster_floor_faces(mesh, floor_indices, min_faces=20):
     """
     Clusters floor faces into connected regions using BFS on face adjacency.
     Two faces are adjacent if they share an edge (two vertices).
@@ -117,7 +117,21 @@ def cluster_floor_faces(mesh, floor_indices):
         regions.append(region)
 
     assert len(regions) > 0, "BFS produced zero regions."
-    print(f"Connected regions found: {len(regions)}")
+
+    # Filter out noise regions — tiny disconnected fragments from furniture,
+    # mesh artifacts, and surface details that are not real spatial regions.
+    # min_faces=20 removes single triangles and small clusters while keeping
+    # genuine room-scale floor areas.
+    all_count = len(regions)
+    regions = [r for r in regions if len(r) >= min_faces]
+
+    assert len(regions) > 0, (
+        f"All {all_count} regions were smaller than min_faces={min_faces}. "
+        f"Try lowering min_faces."
+    )
+
+    print(f"Connected regions found: {all_count} total, "
+          f"{len(regions)} after min_faces={min_faces} filter")
     for i, r in enumerate(regions):
         print(f"  Region {i}: {len(r)} faces")
     return regions
