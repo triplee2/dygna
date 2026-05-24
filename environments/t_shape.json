@@ -1,0 +1,1 @@
+{"name": "t_shape", "rooms": [{"cx": 0.0, "cz": 0.0, "type": "room"}, {"cx": 6.0, "cz": 0.0, "type": "room"}, {"cx": 3.0, "cz": 6.0, "type": "room"}, {"cx": 3.0, "cz": 0.0, "type": "corridor"}, {"cx": 3.0, "cz": 3.0, "type": "corridor"}], "n_geometries": 17}

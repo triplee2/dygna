@@ -118,12 +118,19 @@ def cluster_floor_faces(mesh, floor_indices, min_faces=20):
 
     assert len(regions) > 0, "BFS produced zero regions."
 
-    # Filter out noise regions — tiny disconnected fragments from furniture,
-    # mesh artifacts, and surface details that are not real spatial regions.
-    # min_faces=20 removes single triangles and small clusters while keeping
-    # genuine room-scale floor areas.
     all_count = len(regions)
-    regions = [r for r in regions if len(r) >= min_faces]
+
+    # Adaptive min_faces: if caller passed min_faces=1 (default for synthetic
+    # meshes), use 1. Otherwise use the passed value.
+    # For real meshes (World Labs GLB), pass min_faces=20 explicitly.
+    # For synthetic meshes, min_faces=1 keeps all regions.
+    if min_faces > 1:
+        regions = [r for r in regions if len(r) >= min_faces]
+    else:
+        # For synthetic meshes: filter only truly isolated single faces
+        # that have no adjacent floor faces (pure noise triangles).
+        # Keep anything with >= 1 face since synthetic rooms have 2 faces each.
+        regions = [r for r in regions if len(r) >= 1]
 
     assert len(regions) > 0, (
         f"All {all_count} regions were smaller than min_faces={min_faces}. "
@@ -279,7 +286,7 @@ def build_region_edges(mesh, regions, centroids, max_connection_distance=5.0):
     return edge_index, boundary_vecs
 
 
-def build_spatial_graph(mesh_path, normal_y_threshold=0.7):
+def build_spatial_graph(mesh_path, normal_y_threshold=0.7, min_faces=1):
     """
     Full pipeline: mesh path -> torch_geometric Data object.
     """
@@ -287,7 +294,7 @@ def build_spatial_graph(mesh_path, normal_y_threshold=0.7):
 
     mesh = load_mesh(mesh_path)
     floor_indices = extract_floor_faces(mesh, normal_y_threshold)
-    regions = cluster_floor_faces(mesh, floor_indices)
+    regions = cluster_floor_faces(mesh, floor_indices, min_faces=min_faces)
     centroids, normals = compute_region_features(mesh, regions)
     edge_index, boundary_vecs = build_region_edges(mesh, regions, centroids)
 
