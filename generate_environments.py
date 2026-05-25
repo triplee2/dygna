@@ -206,7 +206,7 @@ GENERATORS = [
 ]
 
 # Add 44 random environments to reach 50 total
-for i in range(44):
+for i in range(494):
     GENERATORS.append((f'random_{i:03d}', lambda i=i: generate_random(seed=i)))
 
 print(f"Generating {len(GENERATORS)} environments...")
